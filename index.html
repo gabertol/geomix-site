@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoMix — Multiproxy Sedimentary Provenance Unmixing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sand: #f5f0e8; --sand-dark: #e8e0d0; --stone: #c8b89a;
+    --ochre: #b5763a; --rust: #8b4513; --deep: #1a1208;
+    --ink: #2d2010; --slate: #4a3f2f; --accent: #c9622a;
+    --green: #4a6741; --cream: #faf7f2;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--cream); color: var(--ink); }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 3rem;
+    background: rgba(250,247,242,0.95); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--sand-dark);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--rust); text-decoration: none; }
+  .nav-logo span { font-style: italic; color: var(--ochre); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { font-size: 0.82rem; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--slate); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta { background: var(--rust) !important; color: var(--cream) !important; padding: 0.45rem 1.1rem; border-radius: 2px; }
+  .nav-cta:hover { background: var(--accent) !important; }
+
+  /* HERO */
+  .hero {
+    display: grid; grid-template-columns: 1fr 1fr;
+    min-height: 88vh;
+  }
+  .hero-left {
+    background: var(--deep); padding: 7rem 4rem 5rem 5rem;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hero-tag { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); margin-bottom: 1.8rem; }
+  .hero-title { font-family: 'Playfair Display', serif; font-size: clamp(2.8rem, 4.5vw, 4.5rem); line-height: 1.05; color: var(--sand); margin-bottom: 1.4rem; }
+  .hero-title em { color: var(--ochre); font-style: italic; }
+  .hero-sub { font-size: 1rem; font-weight: 300; color: var(--stone); line-height: 1.75; max-width: 420px; margin-bottom: 2.8rem; }
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 0.85rem 1.8rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 2px; text-decoration: none; transition: all 0.2s; }
+  .btn-primary { background: var(--ochre); color: var(--deep); }
+  .btn-primary:hover { background: var(--stone); transform: translateY(-2px); }
+  .btn-outline { border: 1px solid var(--stone); color: var(--stone); }
+  .btn-outline:hover { border-color: var(--ochre); color: var(--ochre); transform: translateY(-2px); }
+  .hero-right {
+    background: var(--sand); display: flex; align-items: center; justify-content: center; padding: 4rem 3rem;
+  }
+
+  /* MODEL EQUATION CARD */
+  .eq-card { background: white; border: 1px solid var(--sand-dark); border-radius: 6px; padding: 2.5rem; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+  .eq-card h4 { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stone); margin-bottom: 1.4rem; }
+  .eq { font-family: 'IBM Plex Mono', monospace; font-size: 1.1rem; color: var(--ink); margin-bottom: 0.5rem; }
+  .eq-comment { font-size: 0.8rem; color: var(--slate); font-weight: 300; line-height: 1.6; margin-bottom: 1.2rem; }
+  .eq-divider { height: 1px; background: var(--sand-dark); margin: 1.2rem 0; }
+  .eq-insight { font-size: 0.82rem; color: var(--slate); font-weight: 300; line-height: 1.65; }
+  .eq-insight strong { color: var(--accent); font-weight: 500; }
+
+  /* SECTIONS */
+  section { padding: 6rem 5rem; }
+  .section-tag { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ochre); margin-bottom: 0.8rem; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 3vw, 2.8rem); color: var(--ink); margin-bottom: 0.8rem; line-height: 1.15; }
+  .section-lead { font-size: 1rem; font-weight: 300; color: var(--slate); line-height: 1.8; max-width: 560px; }
+
+  /* VIGNETTES */
+  #vignettes { background: var(--cream); }
+  .vignette-grid { margin-top: 3.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .vignette-card {
+    background: white; border: 1px solid var(--sand-dark); border-radius: 4px;
+    padding: 2.5rem; text-decoration: none; color: inherit;
+    transition: box-shadow 0.2s, transform 0.2s; display: block;
+  }
+  .vignette-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-3px); }
+  .v-num { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--sand-dark); line-height: 1; margin-bottom: 1rem; font-style: italic; }
+  .vignette-card h3 { font-weight: 500; font-size: 1.1rem; color: var(--ink); margin-bottom: 0.6rem; }
+  .vignette-card p { font-size: 0.86rem; font-weight: 300; color: var(--slate); line-height: 1.65; margin-bottom: 1.2rem; }
+  .v-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+  .tag { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; background: var(--sand-dark); color: var(--slate); }
+  .tag-green { background: rgba(74,103,65,0.12); color: var(--green); }
+  .tag-rust  { background: rgba(139,69,19,0.1);  color: var(--rust);  }
+  .tag-ochre { background: rgba(181,118,58,0.12); color: var(--ochre); }
+  .v-cta { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ochre); font-weight: 500; letter-spacing: 0.05em; }
+  .vignette-card:hover .v-cta { color: var(--accent); }
+
+  /* PROXIES */
+  #proxies { background: var(--sand); }
+  .proxy-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--sand-dark); border: 1px solid var(--sand-dark); margin-top: 3.5rem; }
+  .proxy-card { background: var(--cream); padding: 2rem 1.8rem; }
+  .proxy-card:hover { background: white; }
+  .proxy-icon { font-size: 1.4rem; margin-bottom: 1.2rem; }
+  .proxy-card h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--ink); margin-bottom: 0.4rem; }
+  .proxy-card p { font-size: 0.81rem; font-weight: 300; color: var(--slate); line-height: 1.6; }
+  .proxy-fn { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--stone); margin-top: 0.8rem; display: block; letter-spacing: 0.05em; }
+
+  /* INSTALL */
+  #install { background: var(--cream); }
+  .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 3.5rem; align-items: start; }
+  .code-block { background: var(--deep); border-radius: 4px; overflow: hidden; margin-bottom: 1.2rem; }
+  .code-head { background: rgba(255,255,255,0.06); padding: 0.55rem 1rem; display: flex; justify-content: space-between; }
+  .code-lang { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+  .code-copy { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--stone); background: none; border: none; cursor: pointer; transition: color 0.2s; }
+  .code-copy:hover { color: var(--ochre); }
+  .code-body { padding: 1.2rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; line-height: 1.7; color: var(--sand); overflow-x: auto; }
+  .code-body .c  { color: #6a9955; }
+  .code-body .fn { color: var(--ochre); }
+  .code-body .s  { color: #ce9178; }
+  .install-note { font-size: 0.84rem; font-weight: 300; color: var(--slate); line-height: 1.75; margin-bottom: 1.5rem; }
+  .install-note a { color: var(--accent); text-decoration: none; }
+  .install-note a:hover { text-decoration: underline; }
+  .deps { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+  .dep { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; padding: 0.25rem 0.6rem; background: var(--sand-dark); border-radius: 2px; color: var(--slate); }
+
+  /* FOOTER */
+  footer { background: var(--deep); color: var(--stone); padding: 2.5rem 5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+  .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--sand); }
+  .footer-logo span { color: var(--ochre); font-style: italic; }
+  .footer-links { display: flex; gap: 2rem; list-style: none; }
+  .footer-links a { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--stone); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--ochre); }
+  .footer-right { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; text-align: right; line-height: 1.9; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .vignette-grid { grid-template-columns: 1fr; }
+    .proxy-grid { grid-template-columns: 1fr 1fr; }
+    .install-grid { grid-template-columns: 1fr; }
+    section { padding: 4rem 1.5rem; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    footer { padding: 2rem 1.5rem; flex-direction: column; text-align: center; }
+    .footer-right { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Geo<span>Mix</span></a>
+  <ul class="nav-links">
+    <li><a href="#vignettes">Vignettes</a></li>
+    <li><a href="#proxies">Proxies</a></li>
+    <li><a href="#install">Install</a></li>
+    <li><a href="https://github.com/gabertol/geomix" target="_blank">GitHub</a></li>
+    <li><a href="https://gabrielbertolini.shinyapps.io/geomix/" target="_blank" class="nav-cta">Web App ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <span class="hero-tag">R Package · v0.1.0 · UBC Earth & Ocean Sciences</span>
+    <h1 class="hero-title">Multi-proxy<br><em>provenance</em><br>unmixing</h1>
+    <p class="hero-sub">Simultaneous inversion of detrital zircon age distributions, heavy minerals, petrography and grain size — within a single coupled NNLS framework operating in simplex space.</p>
+    <div class="hero-btns">
+      <a href="https://gabrielbertolini.shinyapps.io/geomix/" target="_blank" class="btn btn-primary">Launch Web App</a>
+      <a href="#vignettes" class="btn btn-outline">Read Vignettes</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="eq-card">
+      <h4>Core model</h4>
+      <div class="eq">X = A · B + ε</div>
+      <div class="eq-comment">
+        X — samples × features<br>
+        A ∈ Δ<sup>K−1</sup> — mixing proportions<br>
+        B — endmember signatures
+      </div>
+      <div class="eq-divider"></div>
+      <div class="eq">min ‖X − AB‖<sub>F</sub>²</div>
+      <div class="eq-comment" style="margin-bottom:0">s.t. A ≥ 0,  ∑A<sub>i</sub> = 1,  B ≥ 0</div>
+      <div class="eq-divider"></div>
+      <div class="eq-insight">
+        Mixing is <strong>linear in simplex space</strong>. CLR transformation breaks this linearity — simplex+NNLS achieves <strong>~17% lower MAE</strong> vs CLR+NNLS.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIGNETTES -->
+<section id="vignettes">
+  <span class="section-tag">Documentation</span>
+  <h2 class="section-title">Vignettes & worked examples</h2>
+  <p class="section-lead">Complete reproducible analyses — from synthetic validation to real Cretaceous data from the Paraná Basin.</p>
+
+  <div class="vignette-grid">
+
+    <a href="vignettes/vignette-01.html" class="vignette-card">
+      <div class="v-num">01</div>
+      <h3>Method Validation — Synthetic Data (DUMMY4)</h3>
+      <p>End-to-end benchmark on a synthetic dataset with known ground truth. Six methods compared: Baseline NNLS-simplex, Entropy+inv_f, DZ-only, BP-only, CLR+NNLS, CLR+OLS. Demonstrates the ~17% MAE advantage of simplex-space inversion over CLR approaches.</p>
+      <div class="v-tags">
+        <span class="tag tag-ochre">DUMMY4</span>
+        <span class="tag tag-green">unmix()</span>
+        <span class="tag tag-green">inv_f weighting</span>
+        <span class="tag">MAE · R²</span>
+        <span class="tag tag-rust">CLR vs simplex</span>
+      </div>
+      <span class="v-cta">Read vignette →</span>
+    </a>
+
+    <a href="vignettes/vignette-02.html" class="vignette-card">
+      <div class="v-num">02</div>
+      <h3>Non-Uniform Mixtures & A_local Diagnostics (DUMMY6)</h3>
+      <p>Explores hydraulic sorting and grain-size-dependent fractionation using DUMMY6. Introduces the A_local diagnostic: block-specific mixing proportions are compared to the global A matrix to identify proxies carrying unique or inconsistent signal.</p>
+      <div class="v-tags">
+        <span class="tag tag-ochre">DUMMY6</span>
+        <span class="tag tag-green">compute_A_local()</span>
+        <span class="tag tag-green">compare_A_global_local()</span>
+        <span class="tag">Grain-size fractions</span>
+        <span class="tag tag-rust">Mixing curves</span>
+      </div>
+      <span class="v-cta">Read vignette →</span>
+    </a>
+
+  </div>
+</section>
+
+<!-- PROXIES -->
+<section id="proxies">
+  <span class="section-tag">Supported data types</span>
+  <h2 class="section-title">Any combination of proxy blocks</h2>
+  <p class="section-lead">Distributional and compositional blocks are jointly inverted in a single model — each with its own B matrix, all sharing a common A.</p>
+
+  <div class="proxy-grid">
+    <div class="proxy-card">
+      <div class="proxy-icon">⬡</div>
+      <h3>Detrital Zircon U-Pb</h3>
+      <p>Age distributions processed as kernel density estimates. Multi-variable (age + geochemistry) supported.</p>
+      <span class="proxy-fn">build_kde_block() · distributional</span>
+    </div>
+    <div class="proxy-card">
+      <div class="proxy-icon">◈</div>
+      <h3>Heavy Minerals</h3>
+      <p>Point-counting proportions. Simplex-normalised and jointly inverted alongside other blocks.</p>
+      <span class="proxy-fn">build_compositional_block() · compositional</span>
+    </div>
+    <div class="proxy-card">
+      <div class="proxy-icon">▦</div>
+      <h3>Petrography (QFL)</h3>
+      <p>Modal framework composition. Quartz-Feldspar-Lithic or any bulk petrology dataset.</p>
+      <span class="proxy-fn">build_compositional_block() · compositional</span>
+    </div>
+    <div class="proxy-card">
+      <div class="proxy-icon">≈</div>
+      <h3>Grain Size</h3>
+      <p>Continuous distributions as KDE or binned fraction data as compositional vectors.</p>
+      <span class="proxy-fn">build_kde_block() · distributional</span>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <span class="section-tag">Get started</span>
+  <h2 class="section-title">Installation</h2>
+  <p class="section-lead">Install directly from GitHub. Requires R ≥ 3.5.0.</p>
+
+  <div class="install-grid">
+    <div>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">R</span>
+          <button class="code-copy" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="code-body">
+<span class="c"># Install from GitHub</span>
+<span class="fn">install.packages</span>(<span class="s">"devtools"</span>)
+<span class="fn">devtools::install_github</span>(<span class="s">"gabertol/geomix"</span>)
+
+<span class="c"># Load</span>
+library(geomix)
+
+<span class="c"># Minimal example</span>
+fit &lt;- <span class="fn">unmix</span>(data_list, K = 3)
+<span class="fn">print</span>(fit)
+        </div>
+      </div>
+      <div class="code-block">
+        <div class="code-head">
+          <span class="code-lang">R · bootstrap</span>
+          <button class="code-copy" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="code-body">
+boot &lt;- <span class="fn">bootstrap_unmix</span>(
+  data_list  = data_list,
+  K          = 3,
+  n_boot     = 200,
+  conf_level = 0.95
+)
+<span class="fn">plot</span>(boot)
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="install-note">
+        Developed by <strong>Gabriel Bertolini</strong> at the
+        <a href="https://www.eoas.ubc.ca/" target="_blank">Department of Earth, Ocean and Atmospheric Sciences, UBC</a>,
+        under advisor <strong>Joel Saylor</strong>. Mathematical framework developed with
+        Nicholas Richardson, Naomi Graham and Michael Friedlander (UBC Mathematics).
+      </p>
+      <p class="install-note">
+        Source code: <a href="https://github.com/gabertol/geomix" target="_blank">github.com/gabertol/geomix</a><br>
+        Preprint: <a href="https://eartharxiv.org/" target="_blank">EarthArXiv</a><br>
+        Contact: <a href="mailto:gabriel.bertolini@ubc.ca">gabriel.bertolini@ubc.ca</a>
+      </p>
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--slate); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.6rem;">Dependencies</p>
+      <div class="deps">
+        <span class="dep">nnls</span><span class="dep">compositions</span>
+        <span class="dep">MASS</span><span class="dep">ggplot2</span>
+        <span class="dep">dplyr</span><span class="dep">tidyr</span>
+        <span class="dep">jsonlite</span><span class="dep">rlang</span>
+      </div>
+      <br>
+      <p style="font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--slate); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.6rem; margin-top:1rem;">How to cite</p>
+      <div class="code-block">
+        <div class="code-body" style="font-size:0.72rem; line-height:1.6;">
+Bertolini, G. & Saylor, J.E. (2024).
+GeoMix: Simultaneous unmixing of
+compositional and distributional data.
+R package v0.1.0.
+https://github.com/gabertol/geomix
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Geo<span>Mix</span></div>
+  <ul class="footer-links">
+    <li><a href="https://github.com/gabertol/geomix" target="_blank">GitHub</a></li>
+    <li><a href="https://gabrielbertolini.shinyapps.io/geomix/" target="_blank">Web App</a></li>
+    <li><a href="#vignettes">Vignettes</a></li>
+    <li><a href="mailto:gabriel.bertolini@ubc.ca">Contact</a></li>
+  </ul>
+  <div class="footer-right">
+    MIT License · v0.1.0<br>
+    Gabriel Bertolini · UBC EOAS
+  </div>
+</footer>
+
+<script>
+  function copyCode(btn) {
+    const text = btn.closest('.code-block').querySelector('.code-body').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 2000);
+    });
+  }
+</script>
+</body>
+</html>
